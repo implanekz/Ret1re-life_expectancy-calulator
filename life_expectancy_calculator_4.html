@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Expectancy Reality Check | Ret1re.com</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 20px; color: #333;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; font-weight: 700; }
+        .header p { font-size: 1.2rem; opacity: 0.95; }
+        .calculator-card {
+            background: white; border-radius: 20px; padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 30px;
+        }
+        .input-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
+        .spouse-inputs {
+            grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr;
+            gap: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; margin-top: 10px;
+        }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 1rem; font-weight: 600; margin-bottom: 10px; color: #555; }
+        .gender-buttons { display: flex; gap: 10px; }
+        .gender-btn {
+            flex: 1; padding: 15px; border: 2px solid #ddd; background: white;
+            border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s;
+        }
+        .gender-btn:hover { border-color: #667eea; transform: translateY(-2px); }
+        .gender-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: #667eea; }
+        .age-input { width: 100%; height: 50px; -webkit-appearance: none; appearance: none; background: transparent; outline: none; }
+        .age-input::-webkit-slider-track { height: 8px; background: linear-gradient(to right, #667eea, #764ba2); border-radius: 5px; }
+        .age-input::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: white; border: 3px solid #667eea; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .age-input::-moz-range-track { height: 8px; background: linear-gradient(to right, #667eea, #764ba2); border-radius: 5px; }
+        .age-input::-moz-range-thumb { width: 24px; height: 24px; background: white; border: 3px solid #667eea; border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .age-display { text-align: center; font-size: 3rem; font-weight: 700; color: #667eea; margin-top: 10px; }
+
+        .results-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        .result-card { padding: 25px; border-radius: 15px; text-align: center; position: relative; overflow: hidden; }
+        .result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+        .result-card.card-75 { background: #e8f5e9; }
+        .result-card.card-75::before { background: #4caf50; }
+        .result-card.card-50 { background: #e3f2fd; }
+        .result-card.card-50::before { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .result-card.card-25 { background: #fff3e0; }
+        .result-card.card-25::before { background: #ff9800; }
+        .result-label { font-size: 0.9rem; color: #555; margin-bottom: 6px; font-weight: 600; }
+        .result-value { font-size: 2.5rem; font-weight: 700; color: #333; }
+        .result-unit { font-size: 1rem; color: #666; margin-top: 4px; }
+        .result-sublabel { font-size: 0.78rem; color: #888; margin-top: 6px; font-style: italic; }
+
+        .insight-section { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; }
+        .insight-section h2 { font-size: 1.4rem; margin-bottom: 10px; }
+        .insight-content { font-size: 1.05rem; line-height: 1.6; }
+
+        .bottom-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .bottom-section-header h3 { font-size: 1.4rem; color: #333; }
+        .view-toggle { display: flex; background: #f0f0f0; border-radius: 8px; overflow: hidden; }
+        .view-toggle button { padding: 8px 18px; border: none; background: transparent; font-size: 0.9rem; font-weight: 600; color: #666; cursor: pointer; transition: all 0.2s; }
+        .view-toggle button.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .view-toggle button:hover:not(.active) { background: #e0e0e0; }
+
+        .graph-container { background: #f8f9fa; border-radius: 15px; padding: 25px 20px 15px; }
+        .graph-container canvas { width: 100%; height: auto; display: block; }
+        .graph-legend { display: flex; justify-content: center; gap: 24px; margin-top: 14px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 600; }
+        .legend-swatch { width: 32px; height: 4px; border-radius: 2px; }
+
+        .table-container { display: none; max-height: 400px; overflow-y: auto; border-radius: 10px; }
+        .comparison-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .comparison-table th { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 14px; text-align: center; font-weight: 600; font-size: 0.9rem; position: sticky; top: 0; z-index: 1; }
+        .comparison-table th:first-child { text-align: left; }
+        .comparison-table td { padding: 12px 14px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.92rem; }
+        .comparison-table td:first-child { text-align: left; font-weight: 600; }
+        .comparison-table tr:last-child td { border-bottom: none; }
+        .comparison-table tr.highlight-current { background: #fff3cd; }
+        .comparison-table tr:hover { background: #f8f9fa; }
+        .source-note { font-size: 0.78rem; color: #999; margin-top: 14px; text-align: center; font-style: italic; }
+
+        /* ─── HEALTH PROFILE SELECTOR ─── */
+        .health-section {
+            background: #f8f9fa; border-radius: 15px; padding: 24px 28px;
+            margin-bottom: 36px; border: 1px solid #eee;
+        }
+        .health-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+        .health-section-header h3 { font-size: 1.05rem; font-weight: 700; color: #444; }
+        .health-section-header .health-badge {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            padding: 3px 9px; border-radius: 20px;
+        }
+        .health-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+        .health-columns.single { grid-template-columns: 1fr; max-width: 480px; }
+        .health-col-label {
+            font-size: 0.82rem; font-weight: 700; color: #667eea; text-transform: uppercase;
+            letter-spacing: 0.6px; margin-bottom: 12px; padding-bottom: 6px;
+            border-bottom: 2px solid #667eea;
+        }
+        .health-row { margin-bottom: 14px; }
+        .health-row:last-child { margin-bottom: 0; }
+        .health-row-label { font-size: 0.88rem; font-weight: 600; color: #555; margin-bottom: 6px; }
+        .health-options { display: flex; gap: 6px; }
+        .health-opt {
+            flex: 1; padding: 8px 4px; border: 1.5px solid #ddd; background: white;
+            border-radius: 7px; font-size: 0.82rem; font-weight: 600; color: #666;
+            cursor: pointer; transition: all 0.2s; text-align: center; line-height: 1.3;
+        }
+        .health-opt:hover { border-color: #667eea; color: #667eea; }
+        .health-opt.active {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            border-color: #667eea;
+        }
+        .health-note {
+            font-size: 0.76rem; color: #999; margin-top: 14px; font-style: italic; line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .input-section { grid-template-columns: 1fr; }
+            .spouse-inputs { grid-template-columns: 1fr; }
+            .calculator-card { padding: 25px; }
+            .results-section { grid-template-columns: 1fr; }
+            .result-value { font-size: 2rem; }
+            .health-columns { grid-template-columns: 1fr; }
+            .health-columns.single { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📊 Life Expectancy Reality Check</h1>
+        <p>The longer you live, the longer you're expected to live</p>
+    </div>
+    <div class="calculator-card">
+        <div class="input-section">
+            <div class="input-group">
+                <label>Calculation Type</label>
+                <div class="gender-buttons">
+                    <button class="gender-btn calc-type-btn active" data-type="individual">Individual</button>
+                    <button class="gender-btn calc-type-btn" data-type="couple">Married Couple</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Your Gender</label>
+                <div class="gender-buttons">
+                    <button class="gender-btn person-gender-btn active" data-gender="male">Male</button>
+                    <button class="gender-btn person-gender-btn" data-gender="female">Female</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Your Current Age</label>
+                <input type="range" min="60" max="99" value="65" class="age-input" id="ageSlider">
+                <div class="age-display" id="ageDisplay">65</div>
+            </div>
+            <div class="input-group" id="placeholderCol"></div>
+
+            <div id="spouseInputs" style="display:none;" class="spouse-inputs">
+                <div class="input-group">
+                    <label>Spouse Gender</label>
+                    <div class="gender-buttons">
+                        <button class="gender-btn spouse-gender-btn" data-gender="male">Male</button>
+                        <button class="gender-btn spouse-gender-btn active" data-gender="female">Female</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Spouse Current Age</label>
+                    <input type="range" min="60" max="99" value="65" class="age-input" id="spouseAgeSlider">
+                    <div class="age-display" id="spouseAgeDisplay">65</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── HEALTH PROFILE ─── -->
+        <div class="health-section">
+            <div class="health-section-header">
+                <h3>Your Health Profile</h3>
+                <span class="health-badge">Adjusts survival curves</span>
+            </div>
+            <div class="health-columns single" id="healthColumns">
+                <!-- "You" column (always visible) -->
+                <div id="healthColYou">
+                    <div class="health-col-label" id="healthColYouLabel" style="display:none;">You</div>
+                    <div class="health-row">
+                        <div class="health-row-label">Smoking Status</div>
+                        <div class="health-options">
+                            <button class="health-opt active" data-person="my" data-factor="smoking" data-value="never">Never Smoked</button>
+                            <button class="health-opt" data-person="my" data-factor="smoking" data-value="former">Former</button>
+                            <button class="health-opt" data-person="my" data-factor="smoking" data-value="current">Current</button>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div class="health-row-label">Education</div>
+                        <div class="health-options">
+                            <button class="health-opt active" data-person="my" data-factor="education" data-value="college">College+</button>
+                            <button class="health-opt" data-person="my" data-factor="education" data-value="some">Some College</button>
+                            <button class="health-opt" data-person="my" data-factor="education" data-value="high_school">High School−</button>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div class="health-row-label">Current Health</div>
+                        <div class="health-options">
+                            <button class="health-opt" data-person="my" data-factor="health" data-value="excellent">Excellent</button>
+                            <button class="health-opt active" data-person="my" data-factor="health" data-value="good">Good</button>
+                            <button class="health-opt" data-person="my" data-factor="health" data-value="fair">Fair or Poor</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Spouse column (shown only in couple mode) -->
+                <div id="healthColSpouse" style="display:none;">
+                    <div class="health-col-label">Spouse</div>
+                    <div class="health-row">
+                        <div class="health-row-label">Smoking Status</div>
+                        <div class="health-options">
+                            <button class="health-opt active" data-person="sp" data-factor="smoking" data-value="never">Never Smoked</button>
+                            <button class="health-opt" data-person="sp" data-factor="smoking" data-value="former">Former</button>
+                            <button class="health-opt" data-person="sp" data-factor="smoking" data-value="current">Current</button>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div class="health-row-label">Education</div>
+                        <div class="health-options">
+                            <button class="health-opt active" data-person="sp" data-factor="education" data-value="college">College+</button>
+                            <button class="health-opt" data-person="sp" data-factor="education" data-value="some">Some College</button>
+                            <button class="health-opt" data-person="sp" data-factor="education" data-value="high_school">High School−</button>
+                        </div>
+                    </div>
+                    <div class="health-row">
+                        <div class="health-row-label">Current Health</div>
+                        <div class="health-options">
+                            <button class="health-opt" data-person="sp" data-factor="health" data-value="excellent">Excellent</button>
+                            <button class="health-opt active" data-person="sp" data-factor="health" data-value="good">Good</button>
+                            <button class="health-opt" data-person="sp" data-factor="health" data-value="fair">Fair or Poor</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="health-note">These factors adjust your mortality rates using published actuarial research. Effects are multiplicative, not additive — the combined benefit of being a non-smoking college graduate is already built into the math.</p>
+        </div>
+
+        <div class="results-section">
+            <div class="result-card card-75">
+                <div class="result-label" id="label75">75% Chance You Live To</div>
+                <div class="result-value" id="result75">—</div>
+                <div class="result-unit">years old</div>
+                <div class="result-sublabel">3 in 4 exceed this age</div>
+            </div>
+            <div class="result-card card-50">
+                <div class="result-label" id="label50">50% Chance You Live To</div>
+                <div class="result-value" id="result50">—</div>
+                <div class="result-unit">years old</div>
+                <div class="result-sublabel">Median life expectancy</div>
+            </div>
+            <div class="result-card card-25">
+                <div class="result-label" id="label25">25% Chance You Live To</div>
+                <div class="result-value" id="result25">—</div>
+                <div class="result-unit">years old</div>
+                <div class="result-sublabel">1 in 4 reach this age</div>
+            </div>
+        </div>
+
+        <div class="insight-section">
+            <h2>💡 The Wake-Up Call</h2>
+            <div class="insight-content" id="insightText"></div>
+        </div>
+
+        <div class="bottom-section-header">
+            <h3 id="bottomTitle">📈 Survival Probability Curves</h3>
+            <div class="view-toggle">
+                <button class="active" id="graphBtn" onclick="setView('graph')">Graph</button>
+                <button id="tableBtn" onclick="setView('table')">Table</button>
+            </div>
+        </div>
+
+        <div id="graphView" class="graph-container">
+            <canvas id="survivalChart"></canvas>
+            <div class="graph-legend" id="graphLegend"></div>
+        </div>
+        <div id="tableView" class="table-container">
+            <table class="comparison-table">
+                <thead id="tableHead"><tr><th>Age</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <p class="source-note">Data from the Center for Disease Control United States Life Tables, 2022. Survival probabilities calculated from published q(x) mortality rates.</p>
+    </div>
+</div>
+
+<script>
+// ─── DATA: CDC United States Life Tables, 2022 ─────────────────────────────
+// q(x) per 1,000 = probability of dying within 1 year at each age.
+// Using these directly reproduces the CDC survival probability curves.
+const QX = {
+    male: {
+        60:10.80,61:11.85,62:13.05,63:14.42,64:15.95,65:17.68,66:19.61,67:21.78,68:24.22,69:26.96,
+        70:30.07,71:33.58,72:37.56,73:42.06,74:47.11,75:52.79,76:59.14,77:66.24,78:74.12,79:82.87,
+        80:92.56,81:103.28,82:115.10,83:128.11,84:142.41,85:158.09,86:175.22,87:193.87,88:214.14,89:236.11,
+        90:259.85,91:285.44,92:312.96,93:342.49,94:374.11,95:407.88,96:443.85,97:482.07,98:522.58,99:565.44,
+        100:610.67,101:658.33,102:708.49,103:761.20,104:816.52,105:874.50
+    },
+    female: {
+        60:6.27,61:6.89,62:7.60,63:8.40,64:9.32,65:10.36,66:11.55,67:12.90,68:14.45,69:16.22,
+        70:18.26,71:20.60,72:23.28,73:26.34,74:29.82,75:33.78,76:38.25,77:43.30,78:48.96,79:55.30,
+        80:62.38,81:70.27,82:79.03,83:88.74,84:99.47,85:111.30,86:124.31,87:138.58,88:154.18,89:171.19,
+        90:189.70,91:209.79,92:231.55,93:255.08,94:280.49,95:307.87,96:337.32,97:368.94,98:402.83,99:439.08,
+        100:477.78,101:519.04,102:562.97,103:609.68,104:659.21,105:711.70
+    }
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let calcType = 'individual';
+let myGender = 'male', myAge = 65;
+let spGender = 'female', spAge = 65;
+let currentView = 'graph';
+
+// Health profile state — each person has 3 selections
+let myHealth  = { smoking: 'never', education: 'college', health: 'good' };
+let spHealth  = { smoking: 'never', education: 'college', health: 'good' };
+
+// ─── MORTALITY MULTIPLIER TABLE ──────────────────────────────────────────────
+// Each entry is a single joint q(x) multiplier relative to the general
+// population (CDC tables). Derived from published hazard-ratio research:
+//   Smoking:   never ≈ 0.65, former ≈ 0.85, current ≈ 1.30  (vs blended pop)
+//   Education: college ≈ 0.80, some ≈ 0.95, high_school ≈ 1.20
+//   Health:    excellent ≈ 0.70, good ≈ 0.90, fair ≈ 1.35
+// These are NOT multiplied together — the table stores pre-computed joint
+// values that account for the correlation between factors.
+// Structure: MULTIPLIERS[smoking][education][health]
+const MULTIPLIERS = {
+    never: {
+        college:     { excellent: 0.41, good: 0.52, fair: 0.76 },
+        some:        { excellent: 0.49, good: 0.67, fair: 0.93 },
+        high_school: { excellent: 0.59, good: 0.87, fair: 1.06 }
+    },
+    former: {
+        college:     { excellent: 0.49, good: 0.67, fair: 0.99 },
+        some:        { excellent: 0.59, good: 0.81, fair: 1.22 },
+        high_school: { excellent: 0.71, good: 1.06, fair: 1.51 }
+    },
+    current: {
+        college:     { excellent: 0.63, good: 1.06, fair: 1.51 },
+        some:        { excellent: 0.76, good: 1.22, fair: 1.89 },
+        high_school: { excellent: 0.93, good: 1.40, fair: 2.22 }
+    }
+};
+
+function getMultiplier(profile) {
+    return MULTIPLIERS[profile.smoking][profile.education][profile.health];
+}
+
+// ─── SURVIVAL MATH (CDC q(x) based) ─────────────────────────────────────────
+// Cumulative survival = product of (1 - q(x)*multiplier/1000) for each year.
+// multiplier < 1 = healthier than general population; > 1 = higher risk.
+function cumulativeSurvival(gender, startAge, targetAge, multiplier) {
+    const m = multiplier || 1.0;
+    let p = 1;
+    for (let a = startAge; a < targetAge; a++) {
+        const qx = QX[gender][a];
+        if (qx == null) { p *= 0.3; continue; }
+        p *= (1 - Math.min(qx * m, 999) / 1000); // cap at 0.999 mortality so it never goes negative
+    }
+    return p;
+}
+
+function buildCurve(gender, startAge, multiplier) {
+    const curve = [];
+    for (let age = startAge; age <= 106; age++) curve.push({ age, prob: cumulativeSurvival(gender, startAge, age, multiplier) });
+    return curve;
+}
+
+function buildEitherCurve(g1, a1, g2, a2, m1, m2) {
+    const start = Math.min(a1, a2), curve = [];
+    for (let age = start; age <= 106; age++) {
+        const pA = cumulativeSurvival(g1, a1, age, m1);
+        const pB = cumulativeSurvival(g2, a2, age, m2);
+        curve.push({ age, prob: 1 - (1 - pA) * (1 - pB) });
+    }
+    return curve;
+}
+
+function buildBothCurve(g1, a1, g2, a2, m1, m2) {
+    const start = Math.min(a1, a2), curve = [];
+    for (let age = start; age <= 106; age++) {
+        curve.push({ age, prob: cumulativeSurvival(g1, a1, age, m1) * cumulativeSurvival(g2, a2, age, m2) });
+    }
+    return curve;
+}
+
+function findThresholdAge(curve, threshold) {
+    for (let i = 1; i < curve.length; i++) {
+        if (curve[i].prob <= threshold) {
+            const prev = curve[i-1], curr = curve[i];
+            const frac = (prev.prob - threshold) / (prev.prob - curr.prob);
+            return Math.round(prev.age + frac);
+        }
+    }
+    return curve[curve.length-1].age;
+}
+
+// ─── UI WIRING ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.calc-type-btn').forEach(btn => btn.addEventListener('click', function() {
+    document.querySelectorAll('.calc-type-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    calcType = this.dataset.type;
+    document.getElementById('spouseInputs').style.display = calcType === 'couple' ? 'grid' : 'none';
+    syncHealthPanel();
+    update();
+}));
+
+document.querySelectorAll('.person-gender-btn').forEach(btn => btn.addEventListener('click', function() {
+    document.querySelectorAll('.person-gender-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    myGender = this.dataset.gender;
+    update();
+}));
+
+document.querySelectorAll('.spouse-gender-btn').forEach(btn => btn.addEventListener('click', function() {
+    document.querySelectorAll('.spouse-gender-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    spGender = this.dataset.gender;
+    update();
+}));
+
+document.getElementById('ageSlider').addEventListener('input', function() {
+    myAge = parseInt(this.value);
+    document.getElementById('ageDisplay').textContent = myAge;
+    update();
+});
+
+document.getElementById('spouseAgeSlider').addEventListener('input', function() {
+    spAge = parseInt(this.value);
+    document.getElementById('spouseAgeDisplay').textContent = spAge;
+    update();
+});
+
+// ─── HEALTH PROFILE UI ───────────────────────────────────────────────────────
+document.querySelectorAll('.health-opt').forEach(btn => btn.addEventListener('click', function() {
+    const person = this.dataset.person; // 'my' or 'sp'
+    const factor = this.dataset.factor; // 'smoking' | 'education' | 'health'
+    // Deselect siblings in same group
+    this.closest('.health-options').querySelectorAll('.health-opt').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    // Write into state
+    if (person === 'my') myHealth[factor] = this.dataset.value;
+    else                 spHealth[factor] = this.dataset.value;
+    update();
+}));
+
+function syncHealthPanel() {
+    const isCouple = calcType === 'couple';
+    document.getElementById('healthColSpouse').style.display = isCouple ? 'block' : 'none';
+    document.getElementById('healthColYouLabel').style.display = isCouple ? 'block' : 'none';
+    document.getElementById('healthColumns').classList.toggle('single', !isCouple);
+}
+
+
+function setView(v) {
+    currentView = v;
+    document.getElementById('graphView').style.display = v === 'graph' ? 'block' : 'none';
+    document.getElementById('tableView').style.display = v === 'table' ? 'block' : 'none';
+    document.getElementById('graphBtn').classList.toggle('active', v === 'graph');
+    document.getElementById('tableBtn').classList.toggle('active', v === 'table');
+}
+
+// ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
+function update() {
+    calcType === 'individual' ? updateIndividual() : updateCouple();
+}
+
+function updateIndividual() {
+    const mMult = getMultiplier(myHealth);
+    const curve = buildCurve(myGender, myAge, mMult);
+    const age75 = findThresholdAge(curve, 0.75);
+    const age50 = findThresholdAge(curve, 0.50);
+    const age25 = findThresholdAge(curve, 0.25);
+
+    document.getElementById('result75').textContent = age75;
+    document.getElementById('result50').textContent = age50;
+    document.getElementById('result25').textContent = age25;
+    document.getElementById('label75').textContent = '75% Chance You Live To';
+    document.getElementById('label50').textContent = '50% Chance You Live To';
+    document.getElementById('label25').textContent = '25% Chance You Live To';
+
+    const gLabel = myGender === 'male' ? 'a man' : 'a woman';
+    document.getElementById('insightText').textContent =
+        `At age ${myAge}, ${gLabel} has a 50% chance of living to age ${age50} — not 78. ` +
+        `There's a 25% chance (1 in 4) of reaching age ${age25}, which is ${age25 - age50} years beyond the median. ` +
+        `The "headline" life expectancy of ~78 includes infant and childhood deaths that no longer apply to you. ` +
+        `Each year you survive, every one of these numbers moves up. This is why waiting to claim Social Security is so powerful — you're very likely to live longer than you think.`;
+
+    const curves = [{ label: myGender === 'male' ? 'Male' : 'Female', color: myGender === 'male' ? '#4a90d9' : '#e8735a', data: curve }];
+    drawGraph(curves, myAge, 106);
+    drawTable_Individual(curve);
+}
+
+function updateCouple() {
+    const mMult = getMultiplier(myHealth);
+    const sMult = getMultiplier(spHealth);
+    const curveP1 = buildCurve(myGender, myAge, mMult);
+    const curveP2 = buildCurve(spGender, spAge, sMult);
+    const curveEither = buildEitherCurve(myGender, myAge, spGender, spAge, mMult, sMult);
+    const curveBoth = buildBothCurve(myGender, myAge, spGender, spAge, mMult, sMult);
+
+    const age75 = findThresholdAge(curveEither, 0.75);
+    const age50 = findThresholdAge(curveEither, 0.50);
+    const age25 = findThresholdAge(curveEither, 0.25);
+
+    document.getElementById('result75').textContent = age75;
+    document.getElementById('result50').textContent = age50;
+    document.getElementById('result25').textContent = age25;
+    document.getElementById('label75').textContent = '75% Chance One Survives To';
+    document.getElementById('label50').textContent = '50% Chance One Survives To';
+    document.getElementById('label25').textContent = '25% Chance One Survives To';
+
+    const indivMax = Math.max(findThresholdAge(curveP1, 0.50), findThresholdAge(curveP2, 0.50));
+    const g1 = myGender === 'male' ? 'husband' : 'wife';
+    const g2 = spGender === 'male' ? 'husband' : 'wife';
+
+    document.getElementById('insightText').textContent =
+        `For this couple (${g1} age ${myAge}, ${g2} age ${spAge}), the longer-lived spouse's individual 50% expectancy is age ${indivMax}. ` +
+        `But there's a 50% chance at least one of you lives to age ${age50} — that's ${age50 - indivMax} years beyond that. ` +
+        `And there's a 25% chance (1 in 4) one of you reaches age ${age25}. ` +
+        `This is the real planning horizon for Social Security: you're not planning for one lifetime, you're planning for the survivor. ` +
+        `The gap between individual and "either survives" is exactly why waiting to claim is so valuable for couples.`;
+
+    const startAge = Math.min(myAge, spAge);
+    // Label the two individuals properly
+    const p1Label = myGender === 'male' ? 'Male' : 'Female';
+    const p2Label = spGender === 'male' ? 'Male' : 'Female';
+    // If same gender, differentiate by "You" / "Spouse"
+    const l1 = p1Label === p2Label ? 'You' : p1Label;
+    const l2 = p1Label === p2Label ? 'Spouse' : p2Label;
+
+    const curves = [
+        { label: 'Both Partners', color: '#4caf50', data: curveBoth },
+        { label: l1, color: '#4a90d9', data: curveP1 },
+        { label: l2, color: '#e8735a', data: curveP2 },
+        { label: 'Either Partner', color: '#f5a623', data: curveEither }
+    ];
+    drawGraph(curves, startAge, 106);
+    drawTable_Couple(curveP1, curveP2, curveEither, curveBoth);
+}
+
+// ─── GRAPH ───────────────────────────────────────────────────────────────────
+function drawGraph(curves, startAge, endAge) {
+    const canvas = document.getElementById('survivalChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const containerW = canvas.parentElement.getBoundingClientRect().width - 40;
+    const W = containerW, H = 340;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 18, right: 18, bottom: 48, left: 54 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+    const minAge = startAge, maxAge = endAge;
+
+    const xPos = (age) => pad.left + ((age - minAge) / (maxAge - minAge)) * plotW;
+    const yPos = (prob) => pad.top + (1 - prob) * plotH;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid
+    ctx.strokeStyle = '#e4e4e4'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#666'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+    for (let pct = 0; pct <= 100; pct += 10) {
+        const y = yPos(pct / 100);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+        ctx.fillText(pct + '%', pad.left - 6, y + 4);
+    }
+    ctx.textAlign = 'center';
+    const step = (maxAge - minAge) > 40 ? 10 : 5;
+    for (let age = Math.ceil(minAge / step) * step; age <= maxAge; age += step) {
+        const x = xPos(age);
+        ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+        ctx.fillText(age, x, H - pad.bottom + 16);
+    }
+
+    // Axis labels
+    ctx.fillStyle = '#444'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Age', W / 2, H - 2);
+    ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Probability of Survival', 0, 0); ctx.restore();
+
+    // 50% dashed reference
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(pad.left, yPos(0.5)); ctx.lineTo(W - pad.right, yPos(0.5)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#999'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('50%', pad.left + 3, yPos(0.5) - 5);
+
+    // Draw curves
+    curves.forEach(({ data, color }) => {
+        ctx.strokeStyle = color; ctx.lineWidth = 2.8; ctx.beginPath();
+        let started = false;
+        data.forEach(({ age, prob }) => {
+            if (age < minAge || age > maxAge) return;
+            const x = xPos(age), y = yPos(Math.max(0, Math.min(1, prob)));
+            started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
+        });
+        ctx.stroke();
+    });
+
+    // Legend
+    document.getElementById('graphLegend').innerHTML = curves.map(c =>
+        `<div class="legend-item"><div class="legend-swatch" style="background:${c.color}"></div>${c.label}</div>`
+    ).join('');
+}
+
+// ─── TABLE ───────────────────────────────────────────────────────────────────
+function drawTable_Individual(curve) {
+    document.getElementById('tableHead').innerHTML = `<tr><th>Age</th><th>Survival Probability</th></tr>`;
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    // Show every year for first 5, then every 5
+    curve.forEach(({ age, prob }) => {
+        if (age < myAge || age > 101) return;
+
+        const row = document.createElement('tr');
+        if (age === myAge) row.classList.add('highlight-current');
+        row.innerHTML = `<td>${age}</td><td>${(prob * 100).toFixed(1)}%</td>`;
+        tbody.appendChild(row);
+    });
+}
+
+function drawTable_Couple(curveP1, curveP2, curveEither, curveBoth) {
+    const l1 = myGender === spGender ? 'You' : (myGender === 'male' ? 'Male' : 'Female');
+    const l2 = myGender === spGender ? 'Spouse' : (spGender === 'male' ? 'Male' : 'Female');
+    document.getElementById('tableHead').innerHTML =
+        `<tr><th>Age</th><th>${l1} (${myAge})</th><th>${l2} (${spAge})</th><th>Both Survive</th><th>Either Survives</th></tr>`;
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    const toMap = (curve) => { const m = {}; curve.forEach(d => m[d.age] = d.prob); return m; };
+    const m1 = toMap(curveP1), m2 = toMap(curveP2), mE = toMap(curveEither), mB = toMap(curveBoth);
+    const startAge = Math.min(myAge, spAge);
+    const fmt = (v) => v != null ? (v * 100).toFixed(1) + '%' : '—';
+
+    for (let age = startAge; age <= 101; age++) {
+
+        const row = document.createElement('tr');
+        if (age === startAge) row.classList.add('highlight-current');
+        row.innerHTML = `<td>${age}</td><td>${fmt(m1[age])}</td><td>${fmt(m2[age])}</td><td>${fmt(mB[age])}</td><td><strong>${fmt(mE[age])}</strong></td>`;
+        tbody.appendChild(row);
+    }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => { syncHealthPanel(); setTimeout(update, 80); });
+window.addEventListener('resize', () => { if (currentView === 'graph') update(); });
+</script>
+</body>
+</html>
